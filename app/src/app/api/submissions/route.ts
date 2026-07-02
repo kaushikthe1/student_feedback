@@ -40,19 +40,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: { code: 'BAD_REQUEST', message: 'Form is not actively assigned to you' } }, { status: 400 });
     }
 
-    // Check if already submitted for this teacher
-    const existing = await prisma.submission.findFirst({
-      where: {
-        form_id: data.form_id,
-        student_id: session.userId,
-        teacher_id: data.teacher_id,
-      }
-    });
-
-    if (existing) {
-      return NextResponse.json({ error: { code: 'CONFLICT', message: 'You have already submitted feedback for this teacher' } }, { status: 409 });
-    }
-
     const questions = await prisma.question.findMany({
       where: { id: { in: data.responses.map(r => r.question_id) } },
       include: { options: true }
@@ -75,6 +62,7 @@ export async function POST(request: Request) {
           department_id: teacher.department_id,
           designation_snapshot: teacher.designation,
           batch_id_snapshot: profile.batch_id,
+          subject_topic: data.subject_topic || null,
         }
       });
 

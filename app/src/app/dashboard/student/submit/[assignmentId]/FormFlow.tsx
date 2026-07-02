@@ -17,9 +17,8 @@ export default function FormFlow({ assignment, teachers, completedTeacherIds }: 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const availableTeachers = teachers.filter(t => !completedTeacherIds.includes(t.id));
-  const completedTeachersList = teachers.filter(t => completedTeacherIds.includes(t.id));
-
+  const [subjectTopic, setSubjectTopic] = useState('');
+  
   const handleNext = () => {
     if (selectedTeacherId) {
       setStep(2);
@@ -50,6 +49,7 @@ export default function FormFlow({ assignment, teachers, completedTeacherIds }: 
       const payload = {
         form_id: assignment.form_id,
         teacher_id: selectedTeacherId,
+        subject_topic: subjectTopic || undefined,
         responses: formattedResponses,
         consent_given: consentGiven
       };
@@ -103,22 +103,22 @@ export default function FormFlow({ assignment, teachers, completedTeacherIds }: 
             exit={{ opacity: 0, x: -20 }}
             className="space-y-6"
           >
-            <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-200 dark:border-gray-800 shadow-sm">
-              <h2 className="text-xl font-bold mb-6">Select a Teacher to Evaluate</h2>
-              
-              {availableTeachers.length === 0 ? (
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-xl border border-green-200 dark:border-green-900/50 flex items-center">
-                  <CheckCircle2 className="w-5 h-5 mr-3" />
-                  You have evaluated all teachers for this form!
-                </div>
-              ) : (
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-200 dark:border-gray-800 shadow-sm space-y-8">
+              <div>
+                <h2 className="text-xl font-bold mb-4">Select a Teacher to Evaluate</h2>
                 <div className="grid gap-4 md:grid-cols-2">
-                  {availableTeachers.map(teacher => (
+                  {teachers.map(teacher => (
                     <button
                       key={teacher.id}
                       onClick={() => setSelectedTeacherId(teacher.id)}
-                      className={`flex items-center p-4 rounded-xl border transition-all text-left ${selectedTeacherId === teacher.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-gray-200 dark:border-gray-800 hover:border-primary/50'}`}
+                      className={`relative flex items-center p-4 rounded-xl border transition-all text-left overflow-hidden ${selectedTeacherId === teacher.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-gray-200 dark:border-gray-800 hover:border-primary/50'}`}
                     >
+                      {completedTeacherIds.includes(teacher.id) && (
+                        <div className="absolute top-0 right-0 bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-bl-lg flex items-center">
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          EVALUATED
+                        </div>
+                      )}
                       <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
                         <User className="w-5 h-5 text-gray-500" />
                       </div>
@@ -129,19 +129,19 @@ export default function FormFlow({ assignment, teachers, completedTeacherIds }: 
                     </button>
                   ))}
                 </div>
-              )}
+              </div>
 
-              {completedTeachersList.length > 0 && (
-                <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800">
-                  <h3 className="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider">Already Evaluated</h3>
-                  <div className="grid gap-3 md:grid-cols-3">
-                    {completedTeachersList.map(teacher => (
-                      <div key={teacher.id} className="flex items-center p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 opacity-60">
-                        <CheckCircle2 className="w-4 h-4 text-green-500 mr-2" />
-                        <span className="text-sm font-medium">{teacher.name}</span>
-                      </div>
-                    ))}
-                  </div>
+              {selectedTeacherId && (
+                <div className="pt-6 border-t border-gray-100 dark:border-gray-800 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Subject / Topic (Optional)</h3>
+                  <p className="text-xs text-gray-500 mb-3">If you are evaluating this teacher for a specific class or topic, enter it here.</p>
+                  <input
+                    type="text"
+                    placeholder="e.g. Anatomy 101 - Week 3 Lab"
+                    value={subjectTopic}
+                    onChange={(e) => setSubjectTopic(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all"
+                  />
                 </div>
               )}
 

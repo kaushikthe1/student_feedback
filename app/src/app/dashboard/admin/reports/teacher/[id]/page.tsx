@@ -69,6 +69,29 @@ export default async function TeacherReportPage(props: { params: Promise<{ id: s
         <TeacherChart data={analytics.trend} />
       </div>
 
+      {analytics.formsBreakdown.length > 0 && (
+        <div className="space-y-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Detailed Breakdown by Form</h2>
+          {analytics.formsBreakdown.map((form: any) => (
+            <div key={form.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
+              <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800">
+                <h3 className="font-medium text-gray-900 dark:text-white">{form.title}</h3>
+              </div>
+              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                {form.questions.map((q: any) => (
+                  <li key={q.id} className="px-6 py-4 flex items-start justify-between gap-4">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{q.text}</span>
+                    <span className="font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                      {q.score !== null ? q.score.toFixed(1) : '--'} <span className="text-xs text-gray-400 font-normal">/ 100</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Raw Student Feedback</h2>
         <div className="space-y-4">

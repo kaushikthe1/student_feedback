@@ -10,6 +10,7 @@ export const responseSchema = z.object({
 export const submissionSchema = z.object({
   form_id: z.string().uuid(),
   teacher_id: z.string().uuid(),
+  subject_topic: z.string().optional(),
   responses: z.array(responseSchema).min(1),
   consent_given: z.boolean().refine(val => val === true, {
     message: "You must give consent to submit this form",
