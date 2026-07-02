@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Plus, Trash2, GripVertical, Save, Loader2, List, AlignLeft, CheckSquare } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Save, Loader2, List, AlignLeft, CheckSquare, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 type QuestionType = 'RATING' | 'MCQ' | 'DROPDOWN' | 'OPEN_ENDED';
@@ -23,11 +23,30 @@ interface Question {
   options: Option[];
 }
 
-export default function FormBuilder() {
+export default function FormBuilder({ initialData }: { initialData?: any }) {
   const router = useRouter();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [description, setDescription] = useState(initialData?.description || '');
+  
+  const [questions, setQuestions] = useState<Question[]>(
+    initialData?.questions 
+      ? initialData.questions.map((q: any) => ({
+          id: q.id,
+          text: q.text,
+          type: q.type,
+          is_mandatory: q.required,
+          is_scored: q.is_scored,
+          scale_min: q.scale_min,
+          scale_max: q.scale_max,
+          options: q.options ? q.options.map((o: any) => ({
+            id: o.id,
+            text: o.label,
+            weight: o.weight
+          })) : []
+        }))
+      : []
+  );
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -110,26 +129,43 @@ export default function FormBuilder() {
         questions: questions.map((q, index) => ({
           text: q.text,
           type: q.type,
-          is_mandatory: q.is_mandatory,
+          required: q.is_mandatory,
           is_scored: q.is_scored,
           order: index,
           scale_min: q.scale_min,
           scale_max: q.scale_max,
           options: q.options.map((o, oIndex) => ({
-            text: o.text,
+            label: o.text,
             weight: o.weight,
             order: oIndex
           }))
         }))
       };
 
-      const res = await fetch('/api/forms', {
-        method: 'POST',
+      const url = initialData?.id ? `/api/forms/${initialData.id}` : '/api/forms';
+      const method = initialData?.id ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) throw new Error('Failed to save form');
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error?.message || 'Failed to save form');
+      }
+      
+      const savedForm = await res.json();
+      const formId = initialData?.id || savedForm.id;
+
+      if (status === 'PUBLISHED') {
+        const pubRes = await fetch(`/api/forms/${formId}/publish`, { method: 'POST' });
+        if (!pubRes.ok) {
+          const pubErr = await pubRes.json();
+          throw new Error(pubErr.error?.message || 'Form saved, but failed to publish.');
+        }
+      }
       
       router.push('/dashboard/admin/forms');
     } catch (err: any) {

@@ -12,12 +12,14 @@ export const questionSchema = z.object({
   type: z.enum(['RATING', 'MCQ', 'DROPDOWN', 'OPEN_ENDED']),
   required: z.boolean().default(true),
   is_scored: z.boolean().default(true),
-  scale_min: z.number().int().optional(),
-  scale_max: z.number().int().optional(),
+  scale_min: z.number().int().nullable().optional(),
+  scale_max: z.number().int().nullable().optional(),
   options: z.array(questionOptionSchema).optional(),
 }).refine(data => {
   if (data.type === 'RATING') {
-    return data.scale_min !== undefined && data.scale_max !== undefined && data.scale_max > data.scale_min;
+    return data.scale_min !== undefined && data.scale_min !== null && 
+           data.scale_max !== undefined && data.scale_max !== null && 
+           data.scale_max > data.scale_min;
   }
   return true;
 }, {

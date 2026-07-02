@@ -2,7 +2,7 @@ import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, Settings, FileText, CheckCircle2 } from 'lucide-react';
+import { Plus, Settings, FileText, CheckCircle2, ClipboardList } from 'lucide-react';
 
 export default async function FormsPage() {
   const session = await getSession();
@@ -81,9 +81,24 @@ export default async function FormsPage() {
                     {form._count.submissions}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-gray-400 hover:text-primary transition-colors">
-                      <Settings className="w-5 h-5 inline" />
-                    </button>
+                    {form.status === 'DRAFT' && !form.locked ? (
+                      <Link href={`/dashboard/admin/forms/${form.id}/edit`} className="text-gray-400 hover:text-primary transition-colors inline-block" title="Edit Draft">
+                        <Settings className="w-5 h-5 inline" />
+                      </Link>
+                    ) : form.status === 'PUBLISHED' ? (
+                      <>
+                        <button className="text-gray-300 cursor-not-allowed inline-block mr-3" title="Published forms cannot be edited directly">
+                          <Settings className="w-5 h-5 inline" />
+                        </button>
+                        <Link href={`/dashboard/admin/forms/${form.id}`} className="text-primary hover:text-blue-700 transition-colors inline-block" title="Manage Assignments">
+                          <ClipboardList className="w-5 h-5 inline" />
+                        </Link>
+                      </>
+                    ) : (
+                      <button className="text-gray-300 cursor-not-allowed inline-block" title="Published forms cannot be edited directly">
+                        <Settings className="w-5 h-5 inline" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))
