@@ -1,0 +1,365 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  SUPERADMIN
+  ADMIN
+  STUDENT
+}
+
+enum Designation {
+  FACULTY
+  RESIDENT
+}
+
+enum QuestionType {
+  RATING
+  MCQ
+  DROPDOWN
+  OPEN_ENDED
+}
+
+enum FormStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum JobType {
+  REPORT
+  EMAIL
+  EXPORT
+  RESTORE
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum BackupStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum DeletionMode {
+  HARD_DELETE
+  ARCHIVE
+  PURGE
+}
+
+enum EmailType {
+  REPORT
+  PASSWORD_RESET
+  ACCOUNT_SETUP
+  FORM_OPEN
+  FORM_REMINDER
+}
+
+enum EmailStatus {
+  QUEUED
+  SENT
+  FAILED
+  BOUNCED
+}
+
+model User {
+  id                   String    @id @default(uuid())
+  role                 UserRole
+  email                String
+  password_hash        String
+  name                 String
+  must_change_password Boolean   @default(true)
+  is_hidden            Boolean   @default(false)
+  is_active            Boolean   @default(true)
+  token_version        Int       @default(1)
+  last_login_at        DateTime?
+  failed_login_count   Int       @default(0)
+  locked_until         DateTime?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+
+  student_profile      StudentProfile?
+  reset_tokens         PasswordResetToken[]
+
+  @@unique([email, is_active], name: "active_email")
+}
+
+model StudentProfile {
+  id                     String    @id @default(uuid())
+  user_id                String    @unique
+  user                   User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  roll_number            String
+  batch_id               String
+  batch                  Batch     @relation(fields: [batch_id], references: [id])
+  contact                String?
+  privacy_accepted_at    DateTime?
+  privacy_notice_version String?
+  archived               Boolean   @default(false)
+
+  batch_history          BatchHistory[]
+  submissions            Submission[]
+
+  @@unique([roll_number, archived], name: "active_roll_number")
+}
+
+model BatchHistory {
+  id                 String   @id @default(uuid())
+  student_profile_id String
+  student_profile    StudentProfile @relation(fields: [student_profile_id], references: [id], onDelete: Cascade)
+  from_batch_id      String?
+  to_batch_id        String
+  moved_by           String?
+  moved_at           DateTime @default(now())
+}
+
+model Department {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  code       String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  teachers   Teacher[]
+  submissions Submission[]
+}
+
+model Teacher {
+  id            String      @id @default(uuid())
+  name          String
+  email         String
+  phone         String?
+  designation   Designation
+  department_id String
+  department    Department  @relation(fields: [department_id], references: [id])
+  archived      Boolean     @default(false)
+  archived_at   DateTime?
+  archived_by   String?
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+
+  submissions   Submission[]
+  reports       Report[]
+
+  @@unique([email, archived], name: "active_email")
+  @@index([department_id])
+}
+
+model Batch {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  program     String?
+  year        Int?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  students    StudentProfile[]
+  assignments FormAssignment[]
+}
+
+model Form {
+  id             String       @id @default(uuid())
+  title          String
+  description    String?
+  status         FormStatus   @default(DRAFT)
+  version        Int          @default(1)
+  parent_form_id String?
+  locked         Boolean      @default(false)
+  is_template    Boolean      @default(false)
+  created_by     String?
+  archived       Boolean      @default(false)
+  archived_at    DateTime?
+  archived_by    String?
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+
+  questions      Question[]
+  assignments    FormAssignment[]
+  submissions    Submission[]
+  reports        Report[]
+
+  // Self-relation for parent lineage
+  parent_form    Form?        @relation("FormVersions", fields: [parent_form_id], references: [id])
+  child_forms    Form[]       @relation("FormVersions")
+}
+
+model Question {
+  id          String       @id @default(uuid())
+  form_id     String
+  form        Form         @relation(fields: [form_id], references: [id], onDelete: Cascade)
+  order       Int
+  text        String
+  type        QuestionType
+  required    Boolean      @default(true)
+  is_scored   Boolean      @default(true)
+  scale_min   Int?
+  scale_max   Int?
+
+  options     QuestionOption[]
+  answers     Answer[]
+
+  @@unique([form_id, order])
+}
+
+model QuestionOption {
+  id          String   @id @default(uuid())
+  question_id String
+  question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  order       Int
+  label       String
+  weight      Float?
+
+  answers     Answer[]
+
+  @@unique([question_id, order])
+}
+
+model FormAssignment {
+  id               String   @id @default(uuid())
+  form_id          String
+  form             Form     @relation(fields: [form_id], references: [id], onDelete: Cascade)
+  batch_id         String
+  batch            Batch    @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  start_date       DateTime
+  end_date         DateTime
+  daily_start_time String   // format "HH:mm"
+  daily_end_time   String   // format "HH:mm"
+  allowed_weekdays String[] // array of e.g. "MON", "TUE"
+  timezone         String   @default("Asia/Kolkata")
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+}
+
+model Submission {
+  id                   String      @id @default(uuid())
+  form_id              String
+  form                 Form        @relation(fields: [form_id], references: [id])
+  student_id           String
+  student              StudentProfile @relation(fields: [student_id], references: [user_id]) // Matches user_id
+  teacher_id           String
+  teacher              Teacher     @relation(fields: [teacher_id], references: [id])
+  department_id        String
+  department           Department  @relation(fields: [department_id], references: [id])
+  designation_snapshot Designation
+  batch_id_snapshot    String
+  subject_topic        String?
+  submitted_at         DateTime    @default(now())
+  is_flagged           Boolean     @default(false)
+
+  answers              Answer[]
+
+  @@index([teacher_id])
+  @@index([student_id])
+  @@index([form_id])
+  @@index([department_id])
+  @@index([batch_id_snapshot])
+  @@index([submitted_at])
+  @@index([teacher_id, submitted_at])
+  @@index([department_id, submitted_at])
+  @@index([form_id, submitted_at])
+}
+
+model Answer {
+  id               String          @id @default(uuid())
+  submission_id    String
+  submission       Submission      @relation(fields: [submission_id], references: [id], onDelete: Cascade)
+  question_id      String
+  question         Question        @relation(fields: [question_id], references: [id])
+  numeric_value    Float?
+  option_id        String?
+  option           QuestionOption? @relation(fields: [option_id], references: [id])
+  text_value       String?
+  normalized_score Float?
+
+  @@index([submission_id])
+  @@index([question_id])
+}
+
+model Job {
+  id           String      @id @default(uuid())
+  type         JobType
+  status       JobStatus   @default(PENDING)
+  payload      Json?
+  result_path  String?
+  error        String?
+  created_by   String?
+  created_at   DateTime    @default(now())
+  started_at   DateTime?
+  completed_at DateTime?
+
+  reports      Report[]
+  emails       EmailMessage[]
+}
+
+model Report {
+  id           String    @id @default(uuid())
+  teacher_id   String
+  teacher      Teacher   @relation(fields: [teacher_id], references: [id])
+  form_id      String
+  form         Form      @relation(fields: [form_id], references: [id])
+  period_from  DateTime?
+  period_to    DateTime?
+  generated_at DateTime  @default(now())
+  generated_by String?
+  file_path    String
+  job_id       String?
+  job          Job?      @relation(fields: [job_id], references: [id])
+}
+
+model EmailMessage {
+  id         String      @id @default(uuid())
+  to         String
+  type       EmailType
+  subject    String
+  status     EmailStatus @default(QUEUED)
+  job_id     String?
+  job        Job?        @relation(fields: [job_id], references: [id])
+  sent_at    DateTime?
+  error      String?
+  created_at DateTime    @default(now())
+}
+
+model PasswordResetToken {
+  id         String    @id @default(uuid())
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  token_hash String
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime  @default(now())
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  actor_user_id String?
+  action        String
+  entity        String
+  entity_id     String?
+  metadata      Json?
+  ip_address    String?
+  created_at    DateTime @default(now())
+
+  @@index([actor_user_id])
+  @@index([created_at])
+  @@index([entity, entity_id])
+}
+
+model Backup {
+  id           String   @id @default(uuid())
+  filename     String
+  created_by   String?
+  created_at   DateTime @default(now())
+  size_bytes   BigInt?
+  is_encrypted Boolean  @default(true)
+}

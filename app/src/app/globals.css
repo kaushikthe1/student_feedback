@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+}
+
+:root {
+  --background: #faf5ff; /* purple-50 / very light purple */
+  --foreground: #2e1065; /* purple-950 */
+  
+  --primary: #6b21a8; /* purple-800 */
+  --primary-foreground: #ffffff;
+  --primary-hover: #581c87; /* purple-900 */
+  --primary-active: #3b0764; /* purple-950 */
+  
+  --secondary: #f3e8ff; /* purple-100 */
+  --secondary-foreground: #6b21a8; /* purple-800 */
+  
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  
+  --muted: #f3e8ff; /* purple-100 */
+  --muted-foreground: #7e22ce; /* purple-700 */
+  
+  --border: #e9d5ff; /* purple-200 */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #140524; /* extremely dark purple */
+    --foreground: #f3e8ff; /* purple-100 */
+    
+    --primary: #a855f7; /* purple-500 */
+    --primary-foreground: #ffffff;
+    --primary-hover: #9333ea; /* purple-600 */
+    --primary-active: #7e22ce; /* purple-700 */
+    
+    --secondary: #3b0764; /* purple-950 */
+    --secondary-foreground: #f3e8ff; /* purple-100 */
+    
+    --destructive: #7f1d1d;
+    --destructive-foreground: #fca5a5;
+    
+    --muted: #2e1065; /* purple-950 */
+    --muted-foreground: #c084fc; /* purple-400 */
+    
+    --border: #3b0764; /* purple-950 */
+  }
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Global Button Hover & Active Styles to fix contrast easily everywhere */
+button.bg-primary {
+  transition: all 0.2s ease-in-out;
+}
+button.bg-primary:hover {
+  background-color: var(--primary-hover) !important;
+}
+button.bg-primary:active {
+  background-color: var(--primary-active) !important;
+  transform: scale(0.97);
+}
+a.bg-primary {
+  transition: all 0.2s ease-in-out;
+}
+a.bg-primary:hover {
+  background-color: var(--primary-hover) !important;
+}
+a.bg-primary:active {
+  background-color: var(--primary-active) !important;
+  transform: scale(0.97);
+}

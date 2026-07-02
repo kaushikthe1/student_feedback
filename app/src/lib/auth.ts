@@ -1,0 +1,94 @@
+import argon2 from 'argon2';
+import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
+import { cookies } from 'next/headers';
+import { prisma } from './prisma';
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'fallback_secret_please_change_in_production'
+);
+
+export type SessionPayload = JWTPayload & {
+  userId: string;
+  role: 'SUPERADMIN' | 'ADMIN' | 'STUDENT';
+  tokenVersion: number;
+};
+
+export async function hashPassword(password: string): Promise<string> {
+  return argon2.hash(password, { type: argon2.argon2id });
+}
+
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return argon2.verify(hash, password);
+}
+
+export async function createSession(payload: Omit<SessionPayload, 'exp' | 'iat'>) {
+  const token = await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('15m')
+    .sign(JWT_SECRET);
+    
+  const refreshToken = await new SignJWT({ ...payload, isRefresh: true })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d')
+    .sign(JWT_SECRET);
+
+  const cookieStore = await cookies();
+  cookieStore.set('session', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/',
+    maxAge: 15 * 60, // 15 minutes
+  });
+
+  cookieStore.set('refresh_token', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/',
+    maxAge: 7 * 24 * 60 * 60, // 7 days
+  });
+}
+
+export async function verifyToken(token: string): Promise<SessionPayload | null> {
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    return payload as SessionPayload;
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function getSession(): Promise<SessionPayload | null> {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('session')?.value;
+  
+  if (!sessionToken) {
+    return null;
+  }
+
+  const payload = await verifyToken(sessionToken);
+  if (!payload) {
+    return null;
+  }
+
+  // Authoritative per-request read of token_version as per spec §14
+  const user = await prisma.user.findUnique({
+    where: { id: payload.userId },
+    select: { token_version: true, is_active: true }
+  });
+
+  if (!user || !user.is_active || user.token_version !== payload.tokenVersion) {
+    return null;
+  }
+
+  return payload;
+}
+
+export async function clearSession() {
+  const cookieStore = await cookies();
+  cookieStore.delete('session');
+  cookieStore.delete('refresh_token');
+}

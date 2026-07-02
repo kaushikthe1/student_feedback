@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  nginx:
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - app
+    networks:
+      - internal_network
+    restart: unless-stopped
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres_password@postgres:5432/feedback_db?schema=public
+      # We'll use a .env file later for production secrets. For local dev/build we inject standard vars.
+    expose:
+      - "3000"
+    depends_on:
+      - postgres
+    networks:
+      - internal_network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_DB: feedback_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - internal_network
+    restart: unless-stopped
+    # Port is deliberately NOT mapped to host (e.g., - "5432:5432" omitted) per spec.
+
+  backup-cron:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_DB: feedback_db
+      PGHOST: postgres
+    volumes:
+      - backups:/storage/backups
+    entrypoint: >
+      /bin/sh -c "echo '0 2 * * * pg_dump -U postgres -h postgres -d feedback_db | gzip > /storage/backups/backup_$(date +\%Y\%m\%d).sql.gz' | crontab - && crond -f"
+    networks:
+      - internal_network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+networks:
+  internal_network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  backups:
