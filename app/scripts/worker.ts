@@ -118,9 +118,14 @@ async function processEmailJob(job: any) {
     };
 
     if (attachmentPath) {
-      const fullPath = path.join(process.cwd(), attachmentPath);
+      // attachmentPath is a public URL path like /reports/filename.pdf
+      // We need to point to the actual disk location in the public directory
+      const cleanPath = attachmentPath.startsWith('/') ? attachmentPath.substring(1) : attachmentPath;
+      const fullPath = path.join(process.cwd(), 'public', cleanPath);
       if (fs.existsSync(fullPath)) {
         mailOptions.attachments = [{ path: fullPath }];
+      } else {
+        console.error(`Attachment not found at: ${fullPath}`);
       }
     }
 
