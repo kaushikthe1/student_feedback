@@ -6,7 +6,7 @@ import StudentsClient from './StudentsClient';
 export default async function StudentsPage() {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   const initialProfiles = await prisma.studentProfile.findMany({

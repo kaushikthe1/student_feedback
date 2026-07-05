@@ -7,7 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 export default async function NewFormPage() {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   return (

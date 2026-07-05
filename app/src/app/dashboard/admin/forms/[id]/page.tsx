@@ -6,7 +6,7 @@ import FormAssignmentsClient from './FormAssignmentsClient';
 export default async function FormDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   const { id } = await params;

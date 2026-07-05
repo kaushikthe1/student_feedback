@@ -9,7 +9,7 @@ import ExportCsvButton from './ExportCsvButton';
 export default async function ReportsHubPage() {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   const teachers = await prisma.teacher.findMany({

@@ -6,7 +6,7 @@ import BatchesClient from './BatchesClient';
 export default async function BatchesPage() {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   const initialBatches = await prisma.batch.findMany({

@@ -157,6 +157,18 @@ For any queries or comments, please fill out this form: https://forms.gle/E64mmx
 
 Best regards,
 Academic Section, AIIMS Kalyani`;
+    } else if (type === 'PASSWORD_RESET') {
+      emailText = `Hello,
+
+A password reset was requested for your EduFeed account.
+Please click the link below to set a new password:
+
+${job.payload.resetLink}
+
+If you did not request this, please ignore this email. This link will expire in 15 minutes.
+
+Best regards,
+EduFeed System`;
     }
 
     const mailOptions: any = {

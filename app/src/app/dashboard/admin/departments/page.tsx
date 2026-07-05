@@ -6,7 +6,7 @@ import DepartmentsClient from './DepartmentsClient';
 export default async function DepartmentsPage() {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   const initialDepartments = await prisma.department.findMany({

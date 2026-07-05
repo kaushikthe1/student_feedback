@@ -91,3 +91,15 @@ server {
 
 ### 3. Deploy
 Follow Steps 3, 4, and 5 from Scenario 1. The built-in Nginx container will automatically route traffic on port 80 to your app. For SSL, you would install `certbot` on the host machine.
+
+---
+
+## Maintenance & Recovery
+
+### Superadmin Password Recovery
+If the hidden superadmin password is ever lost, it cannot be reset via email. You must use the CLI tool on your VPS:
+
+```bash
+docker-compose exec app npx tsx scripts/recover-superadmin.ts "YourNewPassword123"
+```
+This will instantly change the password and revoke all active sessions for the superadmin account.

@@ -8,7 +8,7 @@ import LanguageReviewClient from './LanguageReviewClient';
 export default async function LanguageReviewPage() {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   // Fetch submissions that contain text answers

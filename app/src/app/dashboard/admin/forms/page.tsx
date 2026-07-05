@@ -8,7 +8,7 @@ import FormsClient from './FormsClient';
 export default async function FormsPage() {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   const forms = await prisma.form.findMany({

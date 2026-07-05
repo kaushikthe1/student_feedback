@@ -7,7 +7,7 @@ import { ArrowLeft, AlertCircle } from 'lucide-react';
 export default async function NonSubmittersPage() {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   // Get active assignments

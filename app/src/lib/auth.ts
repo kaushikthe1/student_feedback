@@ -2,6 +2,8 @@ import argon2 from 'argon2';
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 import { cookies } from 'next/headers';
 import { prisma } from './prisma';
+import fs from 'fs';
+import path from 'path';
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'fallback_secret_please_change_in_production'
@@ -11,6 +13,7 @@ export type SessionPayload = JWTPayload & {
   userId: string;
   role: 'SUPERADMIN' | 'ADMIN' | 'STUDENT';
   tokenVersion: number;
+  mustChangePassword?: boolean;
 };
 
 export async function hashPassword(password: string): Promise<string> {
@@ -62,6 +65,15 @@ export async function verifyToken(token: string): Promise<SessionPayload | null>
 }
 
 export async function getSession(): Promise<SessionPayload | null> {
+  try {
+    // Check for maintenance mode
+    const maintenancePath = path.join(process.cwd(), '.maintenance');
+    if (fs.existsSync(maintenancePath)) {
+      return null;
+    }
+  } catch (e) {
+    // ignore fs errors if deploying somewhere weird
+  }
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get('session')?.value;
   
@@ -74,17 +86,37 @@ export async function getSession(): Promise<SessionPayload | null> {
     return null;
   }
 
+  try {
+    // Check global session epoch (post-restore safety)
+    const epochPath = path.join(process.cwd(), 'session-epoch.txt');
+    if (fs.existsSync(epochPath)) {
+      const epochStr = fs.readFileSync(epochPath, 'utf8').trim();
+      const epochNum = parseInt(epochStr, 10);
+      if (!isNaN(epochNum)) {
+        // If the token was issued BEFORE the epoch, it is invalid
+        if (payload.iat && (payload.iat * 1000) < epochNum) {
+          return null;
+        }
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
   // Authoritative per-request read of token_version as per spec §14
   const user = await prisma.user.findUnique({
     where: { id: payload.userId },
-    select: { token_version: true, is_active: true }
+    select: { token_version: true, is_active: true, must_change_password: true }
   });
 
   if (!user || !user.is_active || user.token_version !== payload.tokenVersion) {
     return null;
   }
 
-  return payload;
+  return {
+    ...payload,
+    mustChangePassword: user.must_change_password
+  };
 }
 
 export async function clearSession() {

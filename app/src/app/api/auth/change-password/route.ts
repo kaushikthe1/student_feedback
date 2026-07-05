@@ -34,9 +34,21 @@ export async function POST(request: Request) {
 
     const newHash = await argon2.hash(data.newPassword);
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: session.userId },
-      data: { password_hash: newHash }
+      data: { 
+        password_hash: newHash,
+        must_change_password: false,
+        token_version: { increment: 1 }
+      }
+    });
+
+    // Re-issue session with new token version so they aren't logged out
+    const { createSession } = await import('@/lib/auth');
+    await createSession({
+      userId: updatedUser.id,
+      role: updatedUser.role,
+      tokenVersion: updatedUser.token_version,
     });
 
     return NextResponse.json({ success: true });

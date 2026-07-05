@@ -6,7 +6,7 @@ import EmailReportsClient from './EmailReportsClient';
 export default async function EmailReportsPage() {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   const forms = await prisma.form.findMany({

@@ -10,7 +10,7 @@ import ExportButtons from './ExportButtons';
 export default async function TeacherReportPage(props: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   const { id } = await props.params;

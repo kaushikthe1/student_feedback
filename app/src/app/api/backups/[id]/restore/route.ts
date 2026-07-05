@@ -49,18 +49,31 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) throw new Error("No DATABASE_URL found");
 
+    const maintenancePath = path.join(process.cwd(), '.maintenance');
+    const epochPath = path.join(process.cwd(), 'session-epoch.txt');
+
     try {
+      // Enter maintenance mode and log start
+      fs.writeFileSync(maintenancePath, 'RESTORING');
+      await logAudit(session.id, 'RESTORE_STARTED', 'Backup', backup.id);
+
       // Execute psql to restore (note: this requires psql in PATH)
       await execAsync(`psql "${dbUrl}" -f "${tempSqlPath}"`);
       
-      // Clean up
-      fs.unlinkSync(tempSqlPath);
+      // Clean up temp sql file
+      if (fs.existsSync(tempSqlPath)) fs.unlinkSync(tempSqlPath);
       
-      await logAudit(session.id, 'RESTORE_BACKUP', 'Backup', backup.id);
+      // Bump epoch to invalidate all old sessions
+      fs.writeFileSync(epochPath, Date.now().toString());
+
+      // Log completion and exit maintenance mode
+      await logAudit(session.id, 'RESTORE_COMPLETED', 'Backup', backup.id);
+      if (fs.existsSync(maintenancePath)) fs.unlinkSync(maintenancePath);
 
       return NextResponse.json({ success: true });
     } catch (execError) {
       if (fs.existsSync(tempSqlPath)) fs.unlinkSync(tempSqlPath);
+      if (fs.existsSync(maintenancePath)) fs.unlinkSync(maintenancePath);
       console.error('psql execution failed:', execError);
       return NextResponse.json({ 
         error: 'Failed to execute psql. Ensure you are running in the Docker production environment where PostgreSQL client tools are installed.' 

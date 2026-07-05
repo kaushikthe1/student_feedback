@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LogOut, User, Settings, Menu, X, LayoutDashboard, FileText, Users, Building, GraduationCap, ShieldAlert, Database, Shield } from 'lucide-react';
 import Image from 'next/image';
 
@@ -11,14 +11,23 @@ export default function DashboardShell({
   userEmail,
   isAdmin,
   isSuperadmin,
+  mustChangePassword,
 }: {
   children: React.ReactNode;
   userEmail: string;
   isAdmin: boolean;
   isSuperadmin: boolean;
+  mustChangePassword?: boolean;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (mustChangePassword && !pathname.includes('/settings')) {
+      router.push('/dashboard/settings?first_login=true');
+    }
+  }, [mustChangePassword, pathname, router]);
 
   const adminNav = [
     { label: 'Overview', href: '/dashboard/admin', icon: LayoutDashboard },

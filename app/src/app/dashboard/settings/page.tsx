@@ -4,7 +4,12 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Key, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
-export default function SettingsPage() {
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+
+function SettingsForm() {
+  const searchParams = useSearchParams();
+  const isFirstLogin = searchParams.get('first_login') === 'true';
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -55,6 +60,13 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
+      {isFirstLogin && (
+        <div className="p-4 bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded-xl flex items-center text-sm font-medium border border-amber-200 dark:border-amber-700/50">
+          <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" />
+          You must change your password before you can access the rest of the dashboard.
+        </div>
+      )}
+      
       <div>
         <h1 className="text-2xl font-bold mb-2">Account Settings</h1>
         <p className="text-gray-500">Manage your account preferences and security.</p>
@@ -139,5 +151,13 @@ export default function SettingsPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+      <SettingsForm />
+    </Suspense>
   );
 }

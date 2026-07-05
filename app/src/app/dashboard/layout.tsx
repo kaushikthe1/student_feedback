@@ -22,6 +22,7 @@ export default async function DashboardLayout({
       userEmail={session.email}
       isAdmin={isAdmin}
       isSuperadmin={isSuperadmin}
+      mustChangePassword={session.mustChangePassword}
     >
       {children}
     </DashboardShell>

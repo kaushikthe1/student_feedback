@@ -7,7 +7,7 @@ import { Users, Building, GraduationCap, FileText, ClipboardList, TrendingUp } f
 export default async function AdminDashboardPage() {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   // Fetch some quick stats

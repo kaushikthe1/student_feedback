@@ -8,7 +8,7 @@ import { ArrowLeft } from 'lucide-react';
 export default async function EditFormPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   const { id } = await params;

@@ -6,7 +6,7 @@ import BackupsClient from './BackupsClient';
 export default async function BackupsPage() {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   const isSuperadmin = session.role === 'SUPERADMIN';

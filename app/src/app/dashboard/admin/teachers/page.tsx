@@ -6,7 +6,7 @@ import TeachersClient from './TeachersClient';
 export default async function TeachersPage() {
   const session = await getSession();
   if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-    redirect('/auth/login');
+    redirect('/');
   }
 
   const initialTeachers = await prisma.teacher.findMany({

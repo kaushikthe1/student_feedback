@@ -109,6 +109,14 @@ export default function LoginPage() {
                 placeholder="Password"
               />
             </div>
+            
+            <div className="flex items-center justify-end">
+              <div className="text-sm">
+                <a href="/forgot-password" className="font-medium text-primary hover:text-primary/80 transition-colors">
+                  Forgot your password?
+                </a>
+              </div>
+            </div>
           </div>
 
           <button
