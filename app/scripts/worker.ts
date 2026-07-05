@@ -145,11 +145,25 @@ async function processEmailJob(job: any) {
       } : undefined,
     });
 
+    let emailText = 'Please find your requested document attached.';
+    if (type === 'REPORT') {
+      emailText = `Dear Faculty,
+
+Please find attached your student feedback report. The Academic Section maintains strict confidentiality; this feedback will never be shared with others, including your HOD. 
+
+For any queries or comments, please fill out this form: https://forms.gle/E64mmxynMp1byRpB8
+
+(Please do not reply to this automated email)
+
+Best regards,
+Academic Section, AIIMS Kalyani`;
+    }
+
     const mailOptions: any = {
       from: process.env.SMTP_FROM || 'noreply@institute.edu',
       to,
       subject,
-      text: 'Please find your requested document attached.',
+      text: emailText,
     };
 
     if (attachmentPath) {
