@@ -4,7 +4,7 @@ import { teacherSchema } from '@/lib/validations/master';
 import { z } from 'zod';
 import { getSession } from '@/lib/auth';
 
-export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSession();
     if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
