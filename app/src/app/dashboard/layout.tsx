@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
 import Link from 'next/link';
-import { LogOut, User, LayoutDashboard, FileText, Users, Building, GraduationCap, Settings } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, FileText, Users, Building, GraduationCap, Settings, ShieldAlert, Database, Shield } from 'lucide-react';
 
 export default async function DashboardLayout({
   children,
@@ -15,15 +15,24 @@ export default async function DashboardLayout({
   }
 
   const isAdmin = session.role === 'ADMIN' || session.role === 'SUPERADMIN';
+  const isSuperadmin = session.role === 'SUPERADMIN';
 
-  const navItems = isAdmin ? [
+  const adminNav = [
     { label: 'Overview', href: '/dashboard/admin', icon: LayoutDashboard },
     { label: 'Forms', href: '/dashboard/admin/forms', icon: FileText },
     { label: 'Departments', href: '/dashboard/admin/departments', icon: Building },
     { label: 'Batches', href: '/dashboard/admin/batches', icon: GraduationCap },
     { label: 'Teachers', href: '/dashboard/admin/teachers', icon: User },
     { label: 'Students', href: '/dashboard/admin/students', icon: Users },
-  ] : [
+    { label: 'Admins', href: '/dashboard/admin/admins', icon: Shield },
+  ];
+
+  if (isSuperadmin) {
+    adminNav.push({ label: 'Audit Logs', href: '/dashboard/admin/audit-logs', icon: ShieldAlert });
+    adminNav.push({ label: 'Backups', href: '/dashboard/admin/backups', icon: Database });
+  }
+
+  const navItems = isAdmin ? adminNav : [
     { label: 'My Feedback', href: '/dashboard/student', icon: LayoutDashboard },
   ];
 

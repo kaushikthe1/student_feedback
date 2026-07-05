@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: edufeed-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-edufeed}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-super_secure_password}
+      POSTGRES_DB: ${POSTGRES_DB:-feedback_db}
+    volumes:
+      - edufeed_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    container_name: edufeed-app
+    restart: always
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql://edufeed:super_secure_password@db:5432/feedback_db}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+      - BACKUP_ENCRYPTION_KEY=${BACKUP_ENCRYPTION_KEY:-generate_a_secure_random_key_here}
+    volumes:
+      - edufeed_backups:/app/backups
+    ports:
+      - "3000:3000"
+
+  # UNCOMMENT THIS BLOCK IF YOU DON'T HAVE AN EXISTING NGINX SETUP
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: edufeed-nginx
+  #   restart: always
+  #   depends_on:
+  #     - app
+  #   volumes:
+  #     - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+  #   ports:
+  #     - "80:80"
+
+volumes:
+  edufeed_postgres_data:
+  edufeed_backups:
