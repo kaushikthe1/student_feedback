@@ -97,6 +97,9 @@ export default async function DashboardLayout({
         <div className="p-8 flex-1">
           {children}
         </div>
+        <footer suppressHydrationWarning className="py-4 border-t border-gray-200 dark:border-gray-800 text-center text-xs text-gray-500 dark:text-gray-400 mt-auto bg-background/50 backdrop-blur-xl">
+          &copy; {new Date().getFullYear()} AIIMS Kalyani. All rights reserved.
+        </footer>
       </main>
     </div>
   );

@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Lock, Mail, Loader2, Sparkles } from 'lucide-react';
+import { Lock, Mail, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -60,12 +61,13 @@ export default function LoginPage() {
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 10 }}
-            className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4"
+            className="w-24 h-24 relative mx-auto mb-4"
           >
-            <Sparkles className="w-8 h-8 text-primary" />
+            <Image src="/logo.png" alt="AIIMS Kalyani Logo" fill className="object-contain" priority />
           </motion.div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Welcome Back</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Sign in to access your dashboard</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">EduFeed</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Student Feedback System</p>
+          <p className="text-xs text-primary font-medium mt-1">Developed by IT department of AIIMS Kalyani</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
@@ -118,6 +120,12 @@ export default function LoginPage() {
           </button>
         </form>
       </motion.div>
+
+      <div className="absolute bottom-6 left-0 right-0 text-center z-10 pointer-events-none">
+        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+          &copy; {new Date().getFullYear()} AIIMS Kalyani. All rights reserved.
+        </p>
+      </div>
     </div>
   );
 }
