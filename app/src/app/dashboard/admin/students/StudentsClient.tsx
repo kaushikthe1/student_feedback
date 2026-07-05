@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Plus, Trash2, Loader2, X, Upload } from 'lucide-react';
+import { Plus, Trash2, Loader2, X, Upload, Edit2 } from 'lucide-react';
 
 type Batch = { id: string; name: string };
 type User = { id: string; name: string; email: string };
@@ -10,6 +10,8 @@ type StudentProfile = { id: string; roll_number: string; batch_id: string; batch
 export default function StudentsClient({ initialData, batches }: { initialData: StudentProfile[], batches: Batch[] }) {
   const [students, setStudents] = useState<StudentProfile[]>(initialData);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
+  const [filterBatch, setFilterBatch] = useState('ALL');
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -20,6 +22,10 @@ export default function StudentsClient({ initialData, batches }: { initialData: 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  const filteredStudents = filterBatch === 'ALL' 
+    ? students 
+    : students.filter(s => s.batch_id === filterBatch);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -87,13 +93,23 @@ export default function StudentsClient({ initialData, batches }: { initialData: 
     reader.readAsText(file);
   };
 
-  const openModal = () => {
+  const openModal = (student?: StudentProfile) => {
     setError('');
-    setName('');
-    setEmail('');
-    setRollNumber('');
-    setPassword('');
-    setBatchId(batches[0]?.id || '');
+    if (student) {
+      setEditingStudentId(student.id);
+      setName(student.user.name);
+      setEmail(student.user.email);
+      setRollNumber(student.roll_number);
+      setBatchId(student.batch_id);
+      setPassword(''); // keep blank unless resetting
+    } else {
+      setEditingStudentId(null);
+      setName('');
+      setEmail('');
+      setRollNumber('');
+      setPassword('');
+      setBatchId(batches[0]?.id || '');
+    }
     setIsModalOpen(true);
   };
 
@@ -103,10 +119,18 @@ export default function StudentsClient({ initialData, batches }: { initialData: 
     setError('');
 
     try {
-      const res = await fetch('/api/students', {
-        method: 'POST',
+      const url = editingStudentId ? `/api/students/${editingStudentId}` : '/api/students';
+      const method = editingStudentId ? 'PATCH' : 'POST';
+      const bodyPayload: any = { name, email, roll_number: rollNumber, batch_id: batchId };
+      
+      if (!editingStudentId || password) {
+        bodyPayload.password = password;
+      }
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, roll_number: rollNumber, batch_id: batchId, password })
+        body: JSON.stringify(bodyPayload)
       });
 
       if (!res.ok) {
@@ -118,8 +142,23 @@ export default function StudentsClient({ initialData, batches }: { initialData: 
         throw new Error(errorMsg);
       }
 
-      const savedStudent = await res.json();
-      setStudents([savedStudent, ...students]);
+      if (editingStudentId) {
+        setStudents(students.map(s => {
+          if (s.id === editingStudentId) {
+            return {
+              ...s, roll_number: rollNumber, batch_id: batchId,
+              batch: batches.find(b => b.id === batchId) || s.batch,
+              user: { ...s.user, name, email }
+            };
+          }
+          return s;
+        }));
+        setSuccessMsg('Student updated successfully.');
+      } else {
+        const savedStudent = await res.json();
+        setStudents([savedStudent, ...students]);
+        setSuccessMsg('Student added successfully.');
+      }
       setIsModalOpen(false);
     } catch (err: any) {
       setError(err.message);
@@ -159,13 +198,25 @@ export default function StudentsClient({ initialData, batches }: { initialData: 
         </div>
       )}
 
-      <div className="flex justify-end gap-3 mb-4">
-        <button 
-          onClick={downloadTemplate}
-          className="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-sm"
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <select 
+          value={filterBatch}
+          onChange={(e) => setFilterBatch(e.target.value)}
+          className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 text-sm w-full sm:w-auto"
         >
-          Download Template
-        </button>
+          <option value="ALL">All Batches</option>
+          {batches.map(b => (
+            <option key={b.id} value={b.id}>{b.name}</option>
+          ))}
+        </select>
+
+        <div className="flex gap-3 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
+          <button 
+            onClick={downloadTemplate}
+            className="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-sm whitespace-nowrap"
+          >
+            Download Template
+          </button>
         <label className="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-sm cursor-pointer">
           <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} disabled={loading} />
           {loading ? 'Importing...' : <><Upload className="w-4 h-4 mr-2" /> Import CSV</>}
@@ -177,6 +228,7 @@ export default function StudentsClient({ initialData, batches }: { initialData: 
           <Plus className="w-4 h-4 mr-2" />
           Add Student
         </button>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
@@ -190,12 +242,12 @@ export default function StudentsClient({ initialData, batches }: { initialData: 
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-            {students.length === 0 ? (
+            {filteredStudents.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">No students found.</td>
               </tr>
             ) : (
-              students.map((profile) => (
+              filteredStudents.map((profile) => (
                 <tr key={profile.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">{profile.user.name}</div>
@@ -210,6 +262,9 @@ export default function StudentsClient({ initialData, batches }: { initialData: 
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button onClick={() => openModal(profile)} className="text-gray-400 hover:text-primary mr-3">
+                      <Edit2 className="w-4 h-4 inline" />
+                    </button>
                     <button onClick={() => handleDelete(profile.id)} className="text-red-500 hover:text-red-700">
                       <Trash2 className="w-4 h-4 inline" />
                     </button>
@@ -225,7 +280,9 @@ export default function StudentsClient({ initialData, batches }: { initialData: 
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md shadow-xl overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">New Student</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {editingStudentId ? 'Edit Student' : 'New Student'}
+              </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-500">
                 <X className="w-5 h-5" />
               </button>
@@ -268,9 +325,11 @@ export default function StudentsClient({ initialData, batches }: { initialData: 
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Password {editingStudentId && <span className="text-gray-400 font-normal">(Leave blank to keep unchanged)</span>}
+                </label>
                 <input
-                  type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
+                  type="password" required={!editingStudentId} value={password} onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800"
                 />
               </div>

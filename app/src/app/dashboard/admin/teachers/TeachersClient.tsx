@@ -10,6 +10,7 @@ export default function TeachersClient({ initialData, departments }: { initialDa
   const [teachers, setTeachers] = useState<Teacher[]>(initialData);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+  const [filterDepartment, setFilterDepartment] = useState('ALL');
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -19,6 +20,10 @@ export default function TeachersClient({ initialData, departments }: { initialDa
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  const filteredTeachers = filterDepartment === 'ALL'
+    ? teachers
+    : teachers.filter(t => t.department_id === filterDepartment);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -132,8 +137,10 @@ export default function TeachersClient({ initialData, departments }: { initialDa
 
       if (editingTeacher) {
         setTeachers(teachers.map(t => t.id === savedTeacher.id ? savedTeacher : t));
+        setSuccessMsg('Teacher updated successfully.');
       } else {
         setTeachers([savedTeacher, ...teachers]);
+        setSuccessMsg('Teacher added successfully.');
       }
       setIsModalOpen(false);
     } catch (err: any) {
@@ -174,13 +181,25 @@ export default function TeachersClient({ initialData, departments }: { initialDa
         </div>
       )}
 
-      <div className="flex justify-end gap-3 mb-4">
-        <button 
-          onClick={downloadTemplate}
-          className="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-sm"
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <select 
+          value={filterDepartment}
+          onChange={(e) => setFilterDepartment(e.target.value)}
+          className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 text-sm w-full sm:w-auto"
         >
-          Download Template
-        </button>
+          <option value="ALL">All Departments</option>
+          {departments.map(d => (
+            <option key={d.id} value={d.id}>{d.name}</option>
+          ))}
+        </select>
+
+        <div className="flex gap-3 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
+          <button 
+            onClick={downloadTemplate}
+            className="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-sm whitespace-nowrap"
+          >
+            Download Template
+          </button>
         <label className="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-sm cursor-pointer">
           <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} disabled={loading} />
           {loading ? 'Importing...' : <><Upload className="w-4 h-4 mr-2" /> Import CSV</>}
@@ -192,6 +211,7 @@ export default function TeachersClient({ initialData, departments }: { initialDa
           <Plus className="w-4 h-4 mr-2" />
           Add Teacher
         </button>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
@@ -205,12 +225,12 @@ export default function TeachersClient({ initialData, departments }: { initialDa
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-            {teachers.length === 0 ? (
+            {filteredTeachers.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">No teachers found.</td>
               </tr>
             ) : (
-              teachers.map((teacher) => (
+              filteredTeachers.map((teacher) => (
                 <tr key={teacher.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900 dark:text-white">{teacher.name}</div>
