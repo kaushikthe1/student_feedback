@@ -53,7 +53,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       data: updateData,
     });
 
-    await logAudit(session.id, 'UPDATE_ADMIN', 'User', updated.id, updateData);
+    await logAudit(session.userId, 'UPDATE_ADMIN', 'User', updated.id, updateData);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -86,7 +86,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       where: { id },
     });
 
-    await logAudit(session.id, 'DELETE_ADMIN', 'User', id);
+    await logAudit(session.userId, 'DELETE_ADMIN', 'User', id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

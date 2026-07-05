@@ -83,17 +83,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, message: `Dry run successful. ${validRows.length} rows ready.` });
     }
 
+    // Pre-hash passwords outside the transaction to prevent holding long DB locks (argon2 is CPU bound)
+    const hashedRows: any[] = [];
+    for (const row of validRows) {
+      const passwordHash = await hashPassword(row.password);
+      hashedRows.push({ ...row, passwordHash });
+    }
+
     // Atomic insertion of User + StudentProfile pairs is hard with createMany, so loop with transaction
     await prisma.$transaction(async (tx) => {
-      for (const row of validRows) {
-        const passwordHash = await hashPassword(row.password);
-
+      for (const row of hashedRows) {
         const user = await tx.user.create({
           data: {
             role: 'STUDENT',
             email: row.login_email,
             name: row.name,
-            password_hash: passwordHash,
+            password_hash: row.passwordHash,
             must_change_password: true,
             is_active: true,
           }

@@ -15,7 +15,10 @@ if (!fs.existsSync(BACKUPS_DIR)) {
 }
 
 function getEncryptionKey(): Buffer {
-  const secret = process.env.BACKUP_ENCRYPTION_KEY || 'default-secret-key-must-be-32bytes!';
+  const secret = process.env.BACKUP_ENCRYPTION_KEY;
+  if (!secret) {
+    throw new Error('BACKUP_ENCRYPTION_KEY environment variable is not set. This is required for secure backups.');
+  }
   // Hash to ensure it's exactly 32 bytes for AES-256
   return crypto.createHash('sha256').update(String(secret)).digest();
 }

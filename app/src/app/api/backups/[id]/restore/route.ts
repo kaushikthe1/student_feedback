@@ -55,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     try {
       // Enter maintenance mode and log start
       fs.writeFileSync(maintenancePath, 'RESTORING');
-      await logAudit(session.id, 'RESTORE_STARTED', 'Backup', backup.id);
+      await logAudit(session.userId, 'RESTORE_STARTED', 'Backup', backup.id);
 
       // Execute psql to restore (note: this requires psql in PATH)
       await execAsync(`psql "${dbUrl}" -f "${tempSqlPath}"`);
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       fs.writeFileSync(epochPath, Date.now().toString());
 
       // Log completion and exit maintenance mode
-      await logAudit(session.id, 'RESTORE_COMPLETED', 'Backup', backup.id);
+      await logAudit(session.userId, 'RESTORE_COMPLETED', 'Backup', backup.id);
       if (fs.existsSync(maintenancePath)) fs.unlinkSync(maintenancePath);
 
       return NextResponse.json({ success: true });

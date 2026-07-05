@@ -41,13 +41,13 @@ export async function POST(req: NextRequest) {
     const newBackup = await prisma.backup.create({
       data: {
         filename: backupResult.filename,
-        created_by: session.id,
+        created_by: session.userId,
         size_bytes: backupResult.sizeBytes,
         is_encrypted: true,
       },
     });
 
-    await logAudit(session.id, 'TRIGGER_BACKUP', 'Backup', newBackup.id, { type: backupResult.type });
+    await logAudit(session.userId, 'TRIGGER_BACKUP', 'Backup', newBackup.id, { type: backupResult.type });
 
     const serializedBackup = {
       ...newBackup,

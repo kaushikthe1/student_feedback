@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     // Read file and send it
     const fileBuffer = fs.readFileSync(filePath);
     
-    await logAudit(session.id, 'DOWNLOAD_BACKUP', 'Backup', backup.id);
+    await logAudit(session.userId, 'DOWNLOAD_BACKUP', 'Backup', backup.id);
 
     return new NextResponse(fileBuffer, {
       headers: {

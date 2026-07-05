@@ -7,7 +7,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-edufeed}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-super_secure_password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-feedback_db}
     volumes:
       - edufeed_postgres_data:/var/lib/postgresql/data
@@ -21,14 +21,15 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql://edufeed:super_secure_password@db:5432/feedback_db}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-edufeed}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-feedback_db}
+      - JWT_SECRET=${JWT_SECRET}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
-      - BACKUP_ENCRYPTION_KEY=${BACKUP_ENCRYPTION_KEY:-generate_a_secure_random_key_here}
+      - BACKUP_ENCRYPTION_KEY=${BACKUP_ENCRYPTION_KEY}
     volumes:
       - edufeed_backups:/app/backups
     ports:

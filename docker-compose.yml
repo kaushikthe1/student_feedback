@@ -18,7 +18,9 @@ services:
       context: ./app
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres_password@postgres:5432/feedback_db?schema=public
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/feedback_db?schema=public
+      - JWT_SECRET=${JWT_SECRET}
+      - BACKUP_ENCRYPTION_KEY=${BACKUP_ENCRYPTION_KEY}
       # We'll use a .env file later for production secrets. For local dev/build we inject standard vars.
     expose:
       - "3000"
@@ -32,7 +34,7 @@ services:
     image: postgres:15-alpine
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: feedback_db
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -45,7 +47,8 @@ services:
     image: postgres:15-alpine
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: feedback_db
       PGHOST: postgres
     volumes:

@@ -5,9 +5,13 @@ import { prisma } from './prisma';
 import fs from 'fs';
 import path from 'path';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'fallback_secret_please_change_in_production'
-);
+function getJwtSecret() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not set. This is required for secure authentication.');
+  }
+  return new TextEncoder().encode(secret);
+}
 
 export type SessionPayload = JWTPayload & {
   userId: string;
@@ -29,13 +33,13 @@ export async function createSession(payload: Omit<SessionPayload, 'exp' | 'iat'>
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('15m')
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
     
   const refreshToken = await new SignJWT({ ...payload, isRefresh: true })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 
   const cookieStore = await cookies();
   cookieStore.set('session', token, {
@@ -57,7 +61,7 @@ export async function createSession(payload: Omit<SessionPayload, 'exp' | 'iat'>
 
 export async function verifyToken(token: string): Promise<SessionPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     return payload as SessionPayload;
   } catch (error) {
     return null;

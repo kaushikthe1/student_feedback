@@ -26,8 +26,9 @@ POSTGRES_USER=edufeed
 POSTGRES_PASSWORD=super_secure_password
 POSTGRES_DB=feedback_db
 
-# Prisma connection string pointing to the Postgres container
-DATABASE_URL="postgresql://edufeed:super_secure_password@db:5432/feedback_db"
+# Security & Cryptography
+JWT_SECRET="generate_a_random_string_here_for_jwt"
+BACKUP_ENCRYPTION_KEY="must_be_exactly_32_bytes_or_more_secure_key"
 
 # Application Settings
 NEXT_PUBLIC_APP_URL="https://edufeed.aiimskalyani.online"

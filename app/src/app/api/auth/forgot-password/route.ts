@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Base URL for the reset link
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (req.headers.get('host') ? `http://${req.headers.get('host')}` : 'http://localhost:3000');
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const resetLink = `${baseUrl}/reset-password?token=${token}`;
 
     // Queue email job

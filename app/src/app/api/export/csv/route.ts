@@ -62,7 +62,8 @@ export async function GET(request: Request) {
           }
         }
       },
-      orderBy: { submitted_at: 'asc' }
+      orderBy: { submitted_at: 'desc' },
+      take: 50000
     });
 
     await prisma.auditLog.create({
@@ -94,7 +95,13 @@ export async function GET(request: Request) {
 
     const escapeCsv = (str: string | null | undefined) => {
       if (str == null) return '';
-      const stringified = String(str);
+      let stringified = String(str);
+      
+      // Neutralize CSV formula injection BEFORE quoting
+      if (/^[=+\-@]/.test(stringified)) {
+        stringified = "'" + stringified;
+      }
+      
       if (stringified.includes(',') || stringified.includes('"') || stringified.includes('\n')) {
         return `"${stringified.replace(/"/g, '""')}"`;
       }
@@ -129,6 +136,10 @@ export async function GET(request: Request) {
         
         csvContent += row.join(',') + '\n';
       }
+    }
+
+    if (submissions.length === 50000) {
+      csvContent += '"---","WARNING: Data truncated at 50,000 limits. The oldest records have been omitted."\n';
     }
 
     return new NextResponse(csvContent, {

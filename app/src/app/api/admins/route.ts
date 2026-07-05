@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await logAudit(session.id, 'CREATE_ADMIN', 'User', newAdmin.id);
+    await logAudit(session.userId, 'CREATE_ADMIN', 'User', newAdmin.id);
 
     return NextResponse.json({ success: true, id: newAdmin.id });
   } catch (error) {
