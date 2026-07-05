@@ -1,4 +1,5 @@
 import { getSession } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 import { getTeacherAnalytics } from '@/lib/analytics';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -22,6 +23,36 @@ export default async function TeacherReportPage(props: { params: Promise<{ id: s
         <Link href="/dashboard/admin/reports" className="text-primary hover:underline mt-4 inline-block">Back to Reports</Link>
       </div>
     );
+  }
+
+  const rawFeedback = await prisma.answer.findMany({
+    where: {
+      submission: { teacher_id: id },
+      text_value: { not: null }
+    },
+    include: {
+      question: { select: { text: true } },
+      submission: {
+        include: {
+          form: { select: { title: true } },
+          student: { select: { roll_number: true } }
+        }
+      }
+    },
+    orderBy: { submission: { submitted_at: 'desc' } }
+  });
+
+  if (rawFeedback.length > 0) {
+    await prisma.auditLog.create({
+      data: {
+        actor_user_id: session.userId,
+        action: 'RAW_FEEDBACK_VIEWED',
+        entity: 'Teacher',
+        entity_id: id,
+        metadata: { context: 'Teacher Analytics Drill-down' },
+        ip_address: 'internal'
+      }
+    });
   }
 
   return (
@@ -92,13 +123,31 @@ export default async function TeacherReportPage(props: { params: Promise<{ id: s
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Raw Student Feedback</h2>
         <div className="space-y-4">
-          <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-            This section would display anonymized raw text feedback from open-ended questions.
-            In a complete implementation, this would fetch Answers where text_value is not null for this teacher.
-          </p>
+          {rawFeedback.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400 italic">No text feedback available for this teacher.</p>
+          ) : (
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800 space-y-4">
+              {rawFeedback.map((fb) => (
+                <li key={fb.id} className="pt-4 first:pt-0">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-md">
+                      {fb.submission.form.title}
+                    </span>
+                    <span className="text-xs text-gray-500 font-mono">
+                      Student: {fb.submission.student.roll_number}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{fb.question.text}</p>
+                  <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                    <p className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{fb.text_value}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 

@@ -185,3 +185,81 @@ export async function getTeacherAnalytics(teacherId: string) {
     formsBreakdown: formattedBreakdown
   };
 }
+
+export async function getDepartmentAverages(departmentId: string) {
+  const teachers = await prisma.teacher.findMany({ where: { department_id: departmentId }, select: { id: true } });
+  
+  const teacherStats = [];
+  for (const t of teachers) {
+    const stats = await getTeacherAnalytics(t.id);
+    if (stats && stats.totalSubmissions > 0) {
+      teacherStats.push(stats);
+    }
+  }
+
+  const overallScores = teacherStats.map(t => t.overallScore).filter(s => s !== null) as number[];
+  const overallScore = overallScores.length > 0 ? overallScores.reduce((a,b) => a+b, 0) / overallScores.length : null;
+
+  const questionScores: Record<string, number[]> = {};
+  for (const t of teacherStats) {
+    for (const form of t.formsBreakdown) {
+      for (const q of form.questions) {
+        if (q.score !== null) {
+          if (!questionScores[q.id]) questionScores[q.id] = [];
+          questionScores[q.id].push(q.score);
+        }
+      }
+    }
+  }
+
+  const questions: Record<string, number> = {};
+  for (const [qId, scores] of Object.entries(questionScores)) {
+    questions[qId] = scores.reduce((a,b) => a+b, 0) / scores.length;
+  }
+
+  return { overallScore, questions };
+}
+
+export async function getInstituteAverages() {
+  const teachers = await prisma.teacher.findMany({ select: { id: true } });
+  
+  const teacherStats = [];
+  for (const t of teachers) {
+    const stats = await getTeacherAnalytics(t.id);
+    if (stats && stats.totalSubmissions > 0) {
+      teacherStats.push(stats);
+    }
+  }
+
+  const overallScores = teacherStats.map(t => t.overallScore).filter(s => s !== null) as number[];
+  const overallScore = overallScores.length > 0 ? overallScores.reduce((a,b) => a+b, 0) / overallScores.length : null;
+
+  const questionScores: Record<string, number[]> = {};
+  for (const t of teacherStats) {
+    for (const form of t.formsBreakdown) {
+      for (const q of form.questions) {
+        if (q.score !== null) {
+          if (!questionScores[q.id]) questionScores[q.id] = [];
+          questionScores[q.id].push(q.score);
+        }
+      }
+    }
+  }
+
+  const questions: Record<string, number> = {};
+  for (const [qId, scores] of Object.entries(questionScores)) {
+    questions[qId] = scores.reduce((a,b) => a+b, 0) / scores.length;
+  }
+
+  return { overallScore, questions };
+}
+
+export async function getDepartmentScore(departmentId: string, formId?: string) {
+  const avgs = await getDepartmentAverages(departmentId);
+  return avgs.overallScore;
+}
+
+export async function getInstituteScore(formId?: string) {
+  const avgs = await getInstituteAverages();
+  return avgs.overallScore;
+}

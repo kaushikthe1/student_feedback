@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { calculateTeacherScore } from '@/lib/analytics';
-import { ChevronRight, BarChart3, Users, AlertTriangle } from 'lucide-react';
+import { ChevronRight, BarChart3, Users, AlertTriangle, MessageSquareWarning } from 'lucide-react';
+import ExportCsvButton from './ExportCsvButton';
 
 export default async function ReportsHubPage() {
   const session = await getSession();
@@ -29,6 +30,9 @@ export default async function ReportsHubPage() {
     })
   );
 
+  const departments = await prisma.department.findMany({ orderBy: { name: 'asc' } });
+  const batches = await prisma.batch.findMany({ orderBy: { year: 'desc' } });
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -36,10 +40,17 @@ export default async function ReportsHubPage() {
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Analytics & Reports</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2">Institutional performance overview and detailed teacher reports.</p>
         </div>
-        <Link href="/dashboard/admin/reports/non-submitters" className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
-          <AlertTriangle className="w-4 h-4 mr-2" />
-          View Non-Submitters
-        </Link>
+        <div className="flex items-center space-x-3">
+          <ExportCsvButton departments={departments} teachers={teachers} batches={batches} />
+          <Link href="/dashboard/admin/reports/language-review" className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+            <MessageSquareWarning className="w-4 h-4 mr-2" />
+            Language Review
+          </Link>
+          <Link href="/dashboard/admin/reports/non-submitters" className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
+            <AlertTriangle className="w-4 h-4 mr-2" />
+            Non-Submitters
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-900 shadow-sm border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
