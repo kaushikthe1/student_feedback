@@ -18,6 +18,15 @@ export default function FormFlow({ assignment, teachers, completedTeacherIds }: 
   const [success, setSuccess] = useState(false);
 
   const [subjectTopic, setSubjectTopic] = useState('');
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('');
+  
+  const uniqueDepartments = Array.from(
+    new Map(teachers.map((t) => [t.department.id, t.department])).values()
+  ).sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+  const filteredTeachers = selectedDepartmentId
+    ? teachers.filter(t => t.department.id === selectedDepartmentId)
+    : [];
   
   const handleNext = () => {
     if (selectedTeacherId) {
@@ -106,8 +115,38 @@ export default function FormFlow({ assignment, teachers, completedTeacherIds }: 
             <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-200 dark:border-gray-800 shadow-sm space-y-8">
               <div>
                 <h2 className="text-xl font-bold mb-4">Select a Teacher to Evaluate</h2>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {teachers.map(teacher => (
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Department
+                  </label>
+                  <select
+                    value={selectedDepartmentId}
+                    onChange={(e) => {
+                      setSelectedDepartmentId(e.target.value);
+                      setSelectedTeacherId('');
+                      setSubjectTopic('');
+                    }}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all bg-white dark:bg-gray-800"
+                  >
+                    <option value="">Select a Department...</option>
+                    {uniqueDepartments.map((dept: any) => (
+                      <option key={dept.id} value={dept.id}>{dept.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {!selectedDepartmentId ? (
+                  <div className="text-center p-8 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-800 text-gray-500">
+                    Please select a department to view available teachers.
+                  </div>
+                ) : filteredTeachers.length === 0 ? (
+                  <div className="text-center p-8 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-800 text-gray-500">
+                    No teachers found for this department.
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {filteredTeachers.map(teacher => (
                     <button
                       key={teacher.id}
                       onClick={() => setSelectedTeacherId(teacher.id)}
@@ -129,6 +168,7 @@ export default function FormFlow({ assignment, teachers, completedTeacherIds }: 
                     </button>
                   ))}
                 </div>
+                )}
               </div>
 
               {selectedTeacherId && (
@@ -250,25 +290,29 @@ export default function FormFlow({ assignment, teachers, completedTeacherIds }: 
                 ))}
               </div>
 
-              {/* Privacy Notice */}
+              {/* Privacy Notice & Guidelines */}
               <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-6 border border-blue-100 dark:border-blue-900/50">
                 <div className="flex items-start">
                   <ShieldAlert className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-1 flex-shrink-0" />
-                  <div className="ml-4">
-                    <h4 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-2">Privacy & Anonymity Guarantee</h4>
-                    <p className="text-blue-700 dark:text-blue-400 text-sm mb-4">
-                      Your responses are entirely anonymous. Teachers and administrators cannot link your feedback back to you. The system only tracks that you have completed the form to prevent duplicates.
-                    </p>
-                    <label className="flex items-center space-x-3 cursor-pointer">
+                  <div className="ml-4 space-y-4">
+                    <div>
+                      <h4 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-2">Feedback Guidelines & Privacy</h4>
+                      <ul className="list-disc list-inside text-blue-700 dark:text-blue-400 text-sm space-y-1 mb-4">
+                        <li><strong>Stay on Topic:</strong> Your feedback should be based on this specific class only, not general or previous sessions.</li>
+                        <li><strong>Maintain Decorum:</strong> Please use appropriate language and be constructive in your responses.</li>
+                        <li><strong>Privacy:</strong> Teachers will receive anonymous feedback and won't be able to see your name. However, for accountability, administrators can trace feedback back to the student if misconduct is reported.</li>
+                      </ul>
+                    </div>
+                    <label className="flex items-start space-x-3 cursor-pointer mt-4">
                       <input
                         type="checkbox"
                         required
                         checked={consentGiven}
                         onChange={(e) => setConsentGiven(e.target.checked)}
-                        className="w-5 h-5 text-primary focus:ring-primary border-gray-300 rounded"
+                        className="w-5 h-5 text-primary focus:ring-primary border-gray-300 rounded mt-0.5"
                       />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">
-                        I understand and consent to submit this feedback anonymously.
+                      <span className="text-sm font-medium text-gray-900 dark:text-white leading-relaxed">
+                        I understand the guidelines and consent to submit this feedback.
                       </span>
                     </label>
                   </div>

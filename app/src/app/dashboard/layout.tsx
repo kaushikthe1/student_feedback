@@ -65,16 +65,24 @@ export default async function DashboardLayout({
               </div>
               <span className="hidden sm:inline-block">{session.email}</span>
             </div>
-            
-            <form action="/api/auth/logout" method="POST">
-              <button 
-                type="submit"
-                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                title="Logout"
+            <div className="flex items-center space-x-2 border-l border-gray-200 dark:border-gray-800 pl-4 ml-2">
+              <Link
+                href="/dashboard/settings"
+                className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                title="Settings"
               >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </form>
+                <Settings className="w-5 h-5" />
+              </Link>
+              <form action="/api/auth/logout" method="POST">
+                <button 
+                  type="submit"
+                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  title="Logout"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </form>
+            </div>
           </div>
         </header>
         <div className="p-8 flex-1">
