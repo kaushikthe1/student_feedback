@@ -178,6 +178,35 @@ export default function StudentsClient({ initialData, batches }: { initialData: 
     }
   };
 
+  const handleBatchDelete = async () => {
+    if (filterBatch === 'ALL') return;
+    
+    const batchName = batches.find(b => b.id === filterBatch)?.name || 'this batch';
+    if (!confirm(`WARNING: Are you sure you want to delete ALL students in ${batchName}? This action cannot be undone.`)) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch('/api/students/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ batchId: filterBatch })
+      });
+      
+      if (!res.ok) {
+        throw new Error('Failed to delete batch');
+      }
+      
+      const data = await res.json();
+      setStudents(students.filter(s => s.batch_id !== filterBatch));
+      setSuccessMsg(`Successfully deleted ${data.hardDeleted + data.archived + data.purged} students from ${batchName}.`);
+      setFilterBatch('ALL');
+    } catch (err: any) {
+      setError(err.message || 'Error deleting batch.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const downloadTemplate = () => {
     const csvContent = "data:text/csv;charset=utf-8,Name,Email,Roll No,Batch Name,Password\nJohn Doe,john@example.com,101,MBBS2026,password123";
     const encodedUri = encodeURI(csvContent);
@@ -211,6 +240,16 @@ export default function StudentsClient({ initialData, batches }: { initialData: 
         </select>
 
         <div className="flex gap-3 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
+          {filterBatch !== 'ALL' && (
+            <button 
+              onClick={handleBatchDelete}
+              disabled={loading}
+              className="inline-flex items-center px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl shadow-sm hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors font-medium text-sm whitespace-nowrap"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Batch
+            </button>
+          )}
           <button 
             onClick={downloadTemplate}
             className="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-sm whitespace-nowrap"

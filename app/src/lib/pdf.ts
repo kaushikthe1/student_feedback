@@ -4,7 +4,8 @@ import path from 'path';
 
 export async function generateTeacherReportPDF(
   reportData: any, 
-  outputPath: string
+  outputPath: string,
+  period?: string
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
@@ -20,6 +21,10 @@ export async function generateTeacherReportPDF(
 
       // Title
       doc.fontSize(20).text('Teacher Analytics Report', { align: 'center' });
+      if (period) {
+        doc.fontSize(12).fillColor('gray').text(`Period: ${period}`, { align: 'center' });
+        doc.fillColor('black');
+      }
       doc.moveDown();
       
       // Teacher Info

@@ -22,6 +22,9 @@ export default function EmailReportsClient({
   const [departmentId, setDepartmentId] = useState('');
   const [teacherId, setTeacherId] = useState('');
   
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  
   const [status, setStatus] = useState<'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR'>('IDLE');
   const [message, setMessage] = useState('');
 
@@ -85,7 +88,9 @@ export default function EmailReportsClient({
           questionIds: selectedQuestionIds,
           filterType,
           departmentId: filterType === 'DEPARTMENT' ? departmentId : undefined,
-          teacherId: filterType === 'TEACHER' ? teacherId : undefined
+          teacherId: filterType === 'TEACHER' ? teacherId : undefined,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined
         })
       });
 
@@ -170,11 +175,41 @@ export default function EmailReportsClient({
           </div>
         )}
 
-        {/* Step 3: Target Filter */}
+        {/* Optional: Select Period */}
         {selectedForm && selectedQuestionIds.length > 0 && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-100">
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-2">
-              3. Select Recipients
+              3. Select Period (Optional)
+            </h2>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start Date</label>
+                <input 
+                  type="date" 
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-primary outline-none bg-white dark:bg-gray-800"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">End Date</label>
+                <input 
+                  type="date" 
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-primary outline-none bg-white dark:bg-gray-800"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">Leaving these blank will include all time data. Teachers with no feedback in the period will show as 0.</p>
+          </div>
+        )}
+
+        {/* Step 4: Target Filter */}
+        {selectedForm && selectedQuestionIds.length > 0 && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-2">
+              4. Select Recipients
             </h2>
             
             <div className="flex space-x-4 mb-4">

@@ -46,7 +46,7 @@ export async function calculateTeacherScore(teacherId: string, formId?: string) 
   return studentAverages.reduce((a, b) => a + b, 0) / studentAverages.length;
 }
 
-export async function getTeacherAnalytics(teacherId: string) {
+export async function getTeacherAnalytics(teacherId: string, startDate?: string, endDate?: string) {
   const teacher = await prisma.teacher.findUnique({
     where: { id: teacherId },
     include: { department: true }
@@ -54,9 +54,20 @@ export async function getTeacherAnalytics(teacherId: string) {
   
   if (!teacher) return null;
 
+  const dateFilter: any = {};
+  if (startDate) dateFilter.gte = new Date(startDate);
+  if (endDate) {
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    dateFilter.lte = end;
+  }
+
   // Fetch all submissions and answers in ONE query
   const submissions = await prisma.submission.findMany({
-    where: { teacher_id: teacherId },
+    where: { 
+      teacher_id: teacherId,
+      ...(Object.keys(dateFilter).length > 0 ? { submitted_at: dateFilter } : {})
+    },
     select: {
       id: true,
       student_id: true,

@@ -9,7 +9,7 @@ export async function POST(request: Request) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const { formId, questionIds, filterType, departmentId, teacherId } = await request.json();
+    const { formId, questionIds, filterType, departmentId, teacherId, startDate, endDate } = await request.json();
 
     if (!formId || !questionIds || !Array.isArray(questionIds) || questionIds.length === 0) {
       return new NextResponse('Invalid input', { status: 400 });
@@ -41,7 +41,9 @@ export async function POST(request: Request) {
         teacherId: t.id,
         formId,
         selectedQuestions: questionIds,
-        sendEmail: true
+        sendEmail: true,
+        startDate,
+        endDate
       },
       created_by: session.userId,
     }));

@@ -7,12 +7,12 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 
 async function processReportJob(job: any) {
-  const { teacherId, formId, sendEmail, selectedQuestions } = job.payload as any;
+  const { teacherId, formId, sendEmail, selectedQuestions, startDate, endDate } = job.payload as any;
   
   await prisma.job.update({ where: { id: job.id }, data: { status: 'RUNNING', started_at: new Date() } });
 
   try {
-    const analytics = await getTeacherAnalytics(teacherId);
+    const analytics = await getTeacherAnalytics(teacherId, startDate, endDate);
     if (!analytics) throw new Error("Teacher not found");
 
     if (formId) {
@@ -25,6 +25,36 @@ async function processReportJob(job: any) {
       });
       analytics.formsBreakdown = analytics.formsBreakdown.filter((f: any) => f.questions.length > 0);
     }
+
+    if (analytics.formsBreakdown.length === 0 && formId) {
+      const form = await prisma.form.findUnique({ where: { id: formId }, include: { questions: true } });
+      if (form) {
+        const qns = form.questions
+          .filter(q => selectedQuestions ? selectedQuestions.includes(q.id) : true)
+          .map(q => ({
+            id: q.id,
+            text: q.text,
+            order: q.order,
+            score: 0
+          }));
+        if (qns.length > 0) {
+          analytics.formsBreakdown = [{
+            id: form.id,
+            title: form.title,
+            questions: qns
+          }];
+          analytics.overallScore = 0;
+        }
+      }
+    }
+
+    if (analytics.overallScore === null) analytics.overallScore = 0;
+    
+    analytics.formsBreakdown.forEach((form: any) => {
+      form.questions.forEach((q: any) => {
+        if (q.score === null) q.score = 0;
+      });
+    });
 
     const deptAvgs = await getDepartmentAverages(analytics.teacher.department_id);
     const instAvgs = await getInstituteAverages();
@@ -44,7 +74,12 @@ async function processReportJob(job: any) {
     const fileName = `teacher_${teacherId}_${Date.now()}.pdf`;
     const outputPath = path.join(reportsDir, fileName);
 
-    await generateTeacherReportPDF(analytics, outputPath);
+    let periodStr = undefined;
+    if (startDate || endDate) {
+      periodStr = `${startDate || 'Start'} to ${endDate || 'Present'}`;
+    }
+
+    await generateTeacherReportPDF(analytics, outputPath, periodStr);
 
     const resultPath = `/reports/${fileName}`;
 
