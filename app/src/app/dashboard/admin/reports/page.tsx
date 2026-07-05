@@ -42,6 +42,10 @@ export default async function ReportsHubPage() {
         </div>
         <div className="flex items-center space-x-3">
           <ExportCsvButton departments={departments} teachers={teachers} batches={batches} />
+          <Link href="/dashboard/admin/reports/email-reports" className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-xl shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+            Email Reports
+          </Link>
           <Link href="/dashboard/admin/reports/language-review" className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
             <MessageSquareWarning className="w-4 h-4 mr-2" />
             Language Review

@@ -7,13 +7,24 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 
 async function processReportJob(job: any) {
-  const { teacherId, formId, sendEmail } = job.payload as any;
+  const { teacherId, formId, sendEmail, selectedQuestions } = job.payload as any;
   
   await prisma.job.update({ where: { id: job.id }, data: { status: 'RUNNING', started_at: new Date() } });
 
   try {
     const analytics = await getTeacherAnalytics(teacherId);
     if (!analytics) throw new Error("Teacher not found");
+
+    if (formId) {
+      analytics.formsBreakdown = analytics.formsBreakdown.filter((f: any) => f.id === formId);
+    }
+
+    if (selectedQuestions && Array.isArray(selectedQuestions)) {
+      analytics.formsBreakdown.forEach((form: any) => {
+        form.questions = form.questions.filter((q: any) => selectedQuestions.includes(q.id));
+      });
+      analytics.formsBreakdown = analytics.formsBreakdown.filter((f: any) => f.questions.length > 0);
+    }
 
     const deptAvgs = await getDepartmentAverages(analytics.teacher.department_id);
     const instAvgs = await getInstituteAverages();
