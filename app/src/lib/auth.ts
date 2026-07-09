@@ -15,6 +15,7 @@ function getJwtSecret() {
 
 export type SessionPayload = JWTPayload & {
   userId: string;
+  email: string;
   role: 'SUPERADMIN' | 'ADMIN' | 'STUDENT';
   tokenVersion: number;
   mustChangePassword?: boolean;

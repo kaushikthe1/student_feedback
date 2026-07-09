@@ -97,7 +97,7 @@ export default async function TeacherReportPage(props: { params: Promise<{ id: s
 
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Performance Trend</h2>
-        <TeacherChart data={analytics.trend} />
+        <TeacherChart data={analytics.trend.map(t => ({ ...t, score: t.score ?? 0 }))} />
       </div>
 
       {analytics.formsBreakdown.length > 0 && (

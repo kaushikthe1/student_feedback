@@ -47,6 +47,7 @@ export async function POST(request: Request) {
     const { createSession } = await import('@/lib/auth');
     await createSession({
       userId: updatedUser.id,
+      email: updatedUser.email,
       role: updatedUser.role,
       tokenVersion: updatedUser.token_version,
     });

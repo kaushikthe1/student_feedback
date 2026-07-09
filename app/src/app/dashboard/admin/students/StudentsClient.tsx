@@ -45,7 +45,7 @@ export default function StudentsClient({ initialData, batches }: { initialData: 
         const startIndex = header.includes('name') || header.includes('email') ? 1 : 0;
         
         let added = 0;
-        const newStudents = [];
+        const newStudents: any[] = [];
         for (let i = startIndex; i < lines.length; i++) {
           const row = lines[i].split(',').map(cell => cell.replace(/^["']|["']$/g, '').trim());
           if (row.length < 5) continue; // Expect Name, Email, Roll No, Batch, Password

@@ -84,6 +84,7 @@ export async function POST(request: Request) {
     // Create session tokens
     await createSession({
       userId: user.id,
+      email: user.email,
       role: user.role,
       tokenVersion: user.token_version,
     });

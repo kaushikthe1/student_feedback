@@ -43,7 +43,7 @@ export default function TeachersClient({ initialData, departments }: { initialDa
         const startIndex = header.includes('name') || header.includes('email') ? 1 : 0;
         
         let added = 0;
-        const newTeachers = [];
+        const newTeachers: any[] = [];
         for (let i = startIndex; i < lines.length; i++) {
           const row = lines[i].split(',').map(cell => cell.replace(/^["']|["']$/g, '').trim());
           if (row.length < 4) continue; // Expect Name, Email, Designation, Department
