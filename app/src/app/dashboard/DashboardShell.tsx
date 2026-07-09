@@ -36,10 +36,10 @@ export default function DashboardShell({
     { label: 'Batches', href: '/dashboard/admin/batches', icon: GraduationCap },
     { label: 'Teachers', href: '/dashboard/admin/teachers', icon: User },
     { label: 'Students', href: '/dashboard/admin/students', icon: Users },
-    { label: 'Admins', href: '/dashboard/admin/admins', icon: Shield },
   ];
 
   if (isSuperadmin) {
+    adminNav.push({ label: 'Admins', href: '/dashboard/admin/admins', icon: Shield });
     adminNav.push({ label: 'Audit Logs', href: '/dashboard/admin/audit-logs', icon: ShieldAlert });
     adminNav.push({ label: 'Backups', href: '/dashboard/admin/backups', icon: Database });
   }

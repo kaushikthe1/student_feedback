@@ -5,7 +5,7 @@ import AdminsClient from './AdminsClient';
 
 export default async function AdminsPage() {
   const session = await getSession();
-  if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
+  if (!session || session.role !== 'SUPERADMIN') {
     redirect('/');
   }
 
