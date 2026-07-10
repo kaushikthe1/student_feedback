@@ -7,6 +7,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    volumes:
+      - reports_data:/var/www/reports:ro
     depends_on:
       - app
     networks:
@@ -21,9 +23,20 @@ services:
       - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/feedback_db?schema=public
       - JWT_SECRET=${JWT_SECRET}
       - BACKUP_ENCRYPTION_KEY=${BACKUP_ENCRYPTION_KEY}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+      - SUPERADMIN_EMAIL=${SUPERADMIN_EMAIL}
+
+
       # We'll use a .env file later for production secrets. For local dev/build we inject standard vars.
     expose:
       - "3000"
+    volumes:
+      - reports_data:/app/public/reports
     depends_on:
       - postgres
     networks:
@@ -68,3 +81,4 @@ networks:
 volumes:
   pgdata:
   backups:
+  reports_data:

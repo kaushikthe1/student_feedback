@@ -22,6 +22,14 @@ RUN npx prisma generate
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
+# Bundle the background worker to plain JS
+RUN npx esbuild scripts/worker.ts --bundle --platform=node --outfile=scripts-dist/worker.js \
+    --external:@prisma/client --external:.prisma --external:argon2
+
+# PDFKit loads .afm font metrics from a data/ folder relative to the bundle
+RUN mkdir -p scripts-dist/data && \
+    cp node_modules/pdfkit/js/data/*.afm scripts-dist/data/
+
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
@@ -38,10 +46,11 @@ RUN adduser --system --uid 1001 nextjs
 # Create backups directory and set permissions
 RUN mkdir -p /app/backups && chown nextjs:nodejs /app/backups
 
-COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+RUN mkdir -p /app/public/reports && chown nextjs:nodejs /app/public/reports
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/scripts-dist ./scripts
 
 # Set the correct permission for prerender cache
 RUN mkdir .next
